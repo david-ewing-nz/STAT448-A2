@@ -14,7 +14,10 @@ library(heatmaply)
 library(MASS)
 library(knitr)
 library(glmnet)
+
+data_folder = "../data/"
 ```
+
 ```{r}
 html_summary <- function(model, title = "Model Summary") {
   summary_text <- capture.output(summary(model))
@@ -36,7 +39,9 @@ html_summary <- function(model, title = "Model Summary") {
 
 ```{r}
 # Load data
-load("../data/Residen.RData")
+RData_file = "Residen.RData"
+RData_path = file.path(data_folder,RData_file)
+load(RData_path)
 Data <- Residen
 
 # Extract variables by category
@@ -435,7 +440,10 @@ While Stepwise is simpler to interpret, its computational cost and higher error 
 ```{r}
 
 # Load the Parkinson's dataset
-parkinsons_data <- read.csv("../data/parkinsons.csv", header = TRUE)[-1]
+parkinsons_file = "parkinsons.csv"
+parkinsons_path =  file.path(data_folder,parkinsons_file)
+parkinsons_data <- read.csv(parkinsons_path, header = TRUE)[-1]
+ 
 
 # Function to split and scale data
 prepare_data <- function(data, seed) {
@@ -597,7 +605,10 @@ The final model formula list below:
 1. Data Preparation and Splitting
 ```{r}
 # Load the data
-weather_data <- read.csv("../data/Weather_Station_Data_v1.csv")
+weather_file <- "Weather_Station_Data_v1.csv"
+weather_path <- file.path(data_folder,weather_file)
+weather_data <- read.csv(weather_path)
+
 
 # Set seed for reproducibility
 set.seed(321)
