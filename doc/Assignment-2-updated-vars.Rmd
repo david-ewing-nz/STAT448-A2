@@ -1,0 +1,989 @@
+---
+title: "STAT448_Assignment2"
+author: " David Ewing 82171149 ,
+          Lillian Lee 32198314"
+date: "2025-04-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Load necessary libraries
+library(ggplot2)
+library(heatmaply) 
+library(MASS)
+library(knitr)
+library(glmnet)
+```
+
+```{r, include=FALSE}
+html_summary <- function(model, title = "Model Summary") {
+  summary_text <- capture.output(summary(model))
+  
+  cat(glue::glue("<h4>{title}</h4>"))
+  cat('<div style="border:1px solid #ccc; padding:10px; max-height:300px; overflow:auto; font-family:monospace; background:#f9f9f9;">')
+  cat("<pre>")
+  cat(paste(summary_text, collapse = "\n"))
+  cat("</pre>")
+  cat("</div>")
+}
+```
+
+## Question 1
+
+### a). Explore with appropriate graphical tools the correlation between the variables
+
+#### **Step 1: Load Data Subset Variables**
+
+```{r}
+# Load data
+load("../data/Residen.RData")
+Data <- Residen
+
+# Extract variables by category
+time_vars <- colnames(Data)[1:4]    # Time variables (START YEAR, START QUARTER, etc.)
+project_vars <- paste0("V", 1:8)    # Project physical/financial variables (V1-V8)
+economic_lag_vars <- list(          # Define economic lag groups (Lag1-Lag5)
+  Lag1 = paste0("V", 9:27),  # V9-V27
+  Lag2 = paste0("V", 28:46),  # V28-V46
+  Lag3 = paste0("V", 47:65),  # V47-V65
+  Lag4 = paste0("V", 66:84),  # V66-V84
+  Lag5 = paste0("V", 85:103))  # V85-V103     
+output_vars <- c("V104", "V105")     # Output variables (sales price and construction costs)
+
+
+#  Define a Reusable Function for Correlation Heatmaps
+
+plot_cor_heatmap <- function(data, vars, title = "Correlation Heatmap", 
+                             k_col = 2, k_row = 2, 
+                             fontsize_row = 8, fontsize_col = 8,
+                              width = 800, height = 600) {
+   # Define colour gradient: red-white-blue
+  custom_palette <- colorRampPalette(c(
+    "#FF0000",  # Red (for -1)
+    "#FFFFFF",  # White (for 0)
+    "#00008B"   # Dark blue (for 1.0)
+))(50)
+  
+  # Extract subset of variables
+  selected_vars <- data[, vars, drop = FALSE]
+  
+  cor_matrix <- cor(selected_vars, use = "complete.obs")
+  
+  # Plot interactive heatmap
+  heatmaply(
+    cor_matrix,
+    colours = custom_palette,  # Apply custom colour
+    limits = c(-1, 1),        # Force colour range to [-1,1]
+    k_col = k_col,
+    k_row = k_row,
+    fontsize_row = fontsize_row,
+    fontsize_col = fontsize_col,
+    main = title,
+    show_dendrogram = c(TRUE, TRUE), # Show row/column dendrograms
+    width = width,
+    height = height
+  )
+ }
+
+```
+
+#### **Step 2: Visualise Correlations by Category**
+
+1.Time Variables vs. Outputs
+```{r}
+# Analyse Sales Price (V104) by starting year
+ggplot(Data, aes(x = as.factor(`START YEAR`), y = V104)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Sales Price by Starting Year", x = "Year", y = "Sales Price (V104)")
+
+# Analyse Sales Price (V104) by starting quarter  
+ggplot(Data, aes(x = as.factor(`START QUARTER`), y = V104)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Sales Price by Starting Quarter", x = "Quarter", y = "Sales Price (V104)")
+
+# Analyse Construction Costs (V105) by starting year
+ggplot(Data, aes(x = as.factor(`START YEAR`), y = V105)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Construction Costs by Starting Year", x = "Year", y = "Construction Costs (V105)")
+
+# Analyse Construction Costs (V105) by starting quarter
+ggplot(Data, aes(x = as.factor(`START QUARTER`), y = V105)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Construction Costs by Starting Quarter", x = "Quarter", y = "Construction Costs (V105)")
+
+cor_time_output <- plot_cor_heatmap(
+  data = Data, 
+  vars = c(time_vars, output_vars),
+  title = " Correlation: Time Variables vs. Outputs")
+
+cor_time_output
+
+
+```
+Time Variables vs. Output Variables – Observations
+
+From the heatmap and boxplots, several structural and temporal patterns emerge within the dataset. These include consistent relationships between project milestones, cost estimates, and pricing variables, as well as clear associations that reflect the influence of time and sequence in the construction process. The observed groupings offer insights into how planning variables, cost projections, and market-facing indicators interact over the lifecycle of residential projects. The specifics are:
+
+```{r q1-correlation-v100-v101, echo=FALSE, results='asis'}
+cat('
+<ul style="margin-top: 0;">
+  <li><strong>Temporal Alignment:</strong>
+    <ul>
+      <li><strong>START YEAR:</strong> Start year (project begins)</li>
+      <li><strong>COMPLETION YEAR:</strong> Completion year (project ends)</li>
+      <li>Correlation between START YEAR and COMPLETION YEAR: (r = 0.988)</li>
+    </ul>
+  </li>
+   The correlation between <strong>START YEAR</strong> and <strong>COMPLETION YEAR</strong>  is extremely high (r = 0.988), indicating that project start and completion years are nearly linearly aligned. This pattern reflects the  stability of construction durations across projects, where scheduling norms and   timelines result in tightly coupled milestone years
+
+The correlation between <strong>START YEAR</strong> and <strong>COMPLETION YEAR</strong> is extremely high, indicating that project start and end years are almost perfectly aligned.  
+This reflects the consistent duration of construction projects, where timelines tend to follow predictable patterns from initiation to completion
+</ul>
+')
+
+ 
+```
+
+ 
+
+```{r q1-correlation-start-completion-with-output, echo=FALSE, results='asis'}
+cat('
+<ul style="margin-top: 0;">
+  <li><strong>Start Year Correlations:</strong>
+    <ul>
+      <li><strong>V9:</strong> Actual Sales Price (r = 0.607)</li>
+      <li><strong>V10:</strong> Actual Construction Cost (r = 0.753)</li>
+    </ul>
+  </li>
+</ul>
+
+<ul style="margin-top: 0;">
+  <li><strong>Completion Year Correlations:</strong>
+    <ul>
+      <li><strong>V9:</strong> Actual Sales Price (r = 0.613)</li>
+      <li><strong>V10:</strong> Actual Construction Cost (r = 0.769)</li>
+    </ul>
+  </li>
+  The heatmap confirms that both start and completion years are positively correlated with construction costs, and  to a slightly lesser degree, with sales prices. This suggests temporal effects have a meaningful role in shaping financial outcomes,  driven by changing economic conditions over time.
+</ul>
+')
+ 
+```
+
+
+
+```{r q1-correlation-v104.v5-v8, echo=FALSE, results='asis'}
+cat('
+<ul style="margin-top: 0;">
+  <li><strong>Correlations with Actual Sales Price (V9):</strong>
+    <ul>
+      <li><strong>V5:</strong> Preliminary estimated construction cost (r = 0.785)</li>
+      <li><strong>V8:</strong> Initial unit price (r = 0.976)</li>
+    </ul>
+  </li>
+  The correlation between V9 and V8 is extremely high, suggesting that initial unit price is an excellent predictor of final sales price.  While V5 also shows a strong correlation, it is  lower than V8, indicating that pricing information may outperform early cost estimates in predicting actual sales outcomes.
+</ul>
+')
+
+ 
+```
+
+```{r q1-correlation-v105.v4-v5, echo=FALSE, results='asis'}
+cat('
+<ul style="margin-top: 0;">
+  <li><strong>Correlations with Actual Construction Cost (V10):</strong>
+    <ul>
+      <li><strong>V4:</strong> Total preliminary estimated construction cost (r = 0.602)</li>
+      <li><strong>V5:</strong> Preliminary estimated construction cost (r = 0.963)</li>
+    </ul>
+  </li>
+  The strength of the relationship between V10 and V5 suggests that V5 is a much more reliable predictor of actual construction cost compared to V4. This pattern indicates that refined preliminary estimates — specifically those captured by V5 — hold greater predictive value than broader or aggregated cost projections.
+</ul>
+')
+ 
+```
+
+
+2.Project Variables vs. Outputs
+
+```{r}
+
+cor_project_output <- plot_cor_heatmap(
+  data = Data, 
+  vars = c(project_vars, output_vars),
+  title = " Correlation: Project Variables vs. Outputs")
+
+cor_project_output
+
+```
+Projects Variables vs. Output Variables – Observations
+
+Based on the correlation heatmap and the variables described, here are some pattern we found:
+
+```{r q1-correlation-v104-v5-v8, echo=FALSE, results='asis'}
+cat('
+<ul style="margin-top: 0;">
+  <li><strong>Predictors of Actual Sales Price (V9):</strong>
+    <ul>
+      <li><strong>V8:</strong> Initial unit price (r = 0.976), and  </li>
+      <li><strong>V5:</strong> Preliminary estimated construction cost (r = 0.785).  </li>
+    </ul>
+   </li>
+  V8 shows a strong correlation with final sales prices, suggesting it is a  reliable predictor. V5, while somewhat weaker, also contributes meaningfully.
+</ul>
+')
+
+
+```
+ 
+```{r q1-correlation-v105-v4-v5, echo=FALSE, results='asis'}
+cat('
+<ul style="margin-top: 0;">
+  <li><strong>Predictors of Actual Construction Cost (V10):</strong>
+    <ul>
+      <li><strong>V4:</strong> Total preliminary estimated construction cost (r = 0.602)</li>
+      <li><strong>V5:</strong> Preliminary estimated construction cost (r = 0.963)</li>
+       <li><strong>V8:</strong> Initial unit price (r = 0.790)</li>
+    </ul>
+  </li>
+  These values indicate that V5 is a significantly more reliable predictor of V10 compared to V4, and 
+  that V8 is not only predictive of sales prices, but also strongly linked to actual construction costs.
+</ul>
+')
+
+cat('
+
+')
+```
+
+ 
+---
+
+
+2.  Economic Variables (Time Lag Analysis)
+
+```{r }
+# Step 1: Save all heatmaply objects into a list
+heatmap_list <- lapply(names(economic_lag_vars), function(lag_name) {
+  current_vars <- c(economic_lag_vars[[lag_name]], output_vars)
+  
+  plot_cor_heatmap(
+    data = Data,
+    vars = current_vars,
+    title = paste("Economic Variables:", lag_name),
+    k_col = 3,
+    k_row = 3
+  )
+})
+
+# Step 2: Show them one by one 
+heatmap_list[[1]]
+heatmap_list[[2]]
+heatmap_list[[3]]  
+heatmap_list[[4]]  
+heatmap_list[[5]]  
+```
+Economic Variables vs. Output Variables – Observations
+ 
+```{r q1-correlation-int-rate-cluster, echo=FALSE, results='asis'}
+cat('
+<p>A long-term negative relationship with economic indicators is explained by Interest Rate Effects captured by variables representing "The number of loans extended by banks" in:</p>
+
+<ul style="margin-top: 0;">
+  <li><strong>V18:</strong> time lag 1, </li>
+  <li><strong>V37:</strong> time lag 2, </li>
+  <li><strong>V56:</strong> time lag 3, </li>
+  <li><strong>V75:</strong> time lag 4, and </li>
+  <li><strong>V94:</strong> in time lag 5. </li>
+</ul>
+')
+
+cat('
+This indicates a strong inverse relationship between banking loan volume and downstream economic activity. The consistency across all five lags suggests that tighter lending conditions constrains real estate market activites, including building permits, floor area expansions, and sales prices. Such correlations align with current events and macroeconomic theory: as borrowing costs increase, construction and investment activity tend to decelerate, hender economic growth.
+')
+```
+ 
+---
+
+```{r, results='asis', echo=FALSE}
+cat('
+<p> Across all five time periods, a group of variables: </p>
+<ul style="margin-top: 0;">
+  <li>V10: Building Services Index,</li>
+  <li>V11: Wholesale Price Index of Building Materials,</li>
+  <li>V13: Cumulative Liquidity,</li>
+  <li>V14: Private Sector Investment in New Buildings,</li>
+  <li>V15: Land Price Index,</li>
+  <li>V19: Average Construction Cost at Completion,</li>
+  <li>V20: Average Construction Cost at Beginning,</li>
+  <li>V23: Consumer Price Index, </li>
+  <li>V24: CPI of Housing, Water, Fuel & Power, and</li>
+  <li>V27: Gold Price per Ounce </li>
+</ul>
+
+<p style="margin-left: 0;"> show high correlations, (0.88 - 0.999),  with:</p>
+
+<ul>
+  <li>V104: Actual Sales Prices, and</li>
+  <li>V105: Actual Construction Costs.</li>
+</ul>
+
+<p style="margin-left: 0;">As these are consitant across the five time lags, there is a potential for   strong and reliable relationships. The ten economic indicators move in lockstep and indicate positive influencees on construction costs and sales prices, independant of time periods. This stability of  relationships across all time lags, indicates potentially fundamental and reliable model of economic drivers for construction and real estate markets.</p>
+')
+```
+
+---
+
+```{r dendrogram, results='asis', echo=FALSE}
+cat('
+<p>The dendrogram and accompanying correlation heatmap reveal two distinct clusters of closely related variables:</p>
+
+<ul style="margin-top: 0;">
+  <li><strong>Building Activity Indicators:</strong>
+    <ul>
+      <li><strong>V9:</strong> Number of building permits issued, and</li>
+      <li><strong>V12:</strong> Total floor area of building permits issued.</li>
+    </ul>
+     
+<p>These variables cluster tightly, reflecting a strong positive correlation, and are visually confirmed by a deep blue hue in the heatmap. This relationship is intuitive, as a higher number of building permits typically entails a greater cumulative floor area.</p>
+ </ul>
+<ul style="margin-top: 0;">
+  <li><strong>Economic and Demographic Drivers:</strong>
+    <ul>
+      <li><strong>V16:</strong> Number of loans extended by banks,</li>
+      <li><strong>V26:</strong> Population of the city</li>
+    </ul>
+     
+<p>These variables also appear in close proximity, with similarly strong positive correlation (deep blue), suggesting that more populous cities tend to receive more bank loans—likely due to greater economic activity and housing demand.</p>
+  
+</ul>
+
+<p>In contrast, both pairs exhibit weaker correlations with other variables, as indicated by lighter blue shades elsewhere in the heatmap. This clustering structure underscores two coherent real-world mechanisms:</p>
+
+<ul style="margin-top: 0;">
+  <li>Permitting volume and size are administratively and physically linked,</li>
+  <li>Loan issuance scales naturally with population-driven economic dynamics.</li>
+</ul>
+')
+```
+
+
+---
+
+
+
+
+### b). Please fit a linear regression model to explain the “actual sales price” (V104) in terms of the of the other variables excluding the variable “actual construction costs” (V105). Explain the output provided by the summary function.
+
+```{r, results='asis'}
+lr_model <- lm(V104~ . - V105,data = Data)
+#summary(lr_model)
+html_summary(lr_model)
+```
+
+The linear regression model predicting actual sales price (V104) offers several key insights regarding model quality, predictor significance, and structural challenges. The following evaluation addresses how well the model fits the data, the relative influence of selected variables, the distribution of residual errors, and any underlying multicollinearity that may affect interpretability or reliability. These diagnostic elements are critical in assessing both the explanatory power and the robustness of the fitted model.
+From the summary of the linear regression model, we can find that:
+
+1.Residuals: 
+Residuals are roughly symmetric around zero (median = -1.50), indicating indicating unbiased predictions on average.However, residuals range widely (-901.15 to 645.31), suggesting the model struggles with extreme values.
+
+2.Coefficients and Significance：
+COMPLETION YEAR (β = 152.1, p < 0.001) and COMPLETION QUARTER (β = 59.84, p < 0.001): These two variables both have a significant positive impact on the model, indicating that the completion year and quarter are crucial predictors of the outcome.
+V3(β = -0.2331, p < 0.001) and V8(β = 1.203, p < 0.001)：V3 has a significant negative impact, while V8 has a significant positive impact,, with V3  stands for  Lot area and V8 to Price of the unit at the beginning of the project per m2.
+V1(β = -4.779, p < 0.05) and V2(β = 0.0663, p < 0.05):V1 has a significant negative impact, while V2 has a significant positive impact. at the 0.05 level, with V1  stands for project locality and V2 to total floor area of the buildings.
+V5(β = -0.6548, p < 0.1) ：V5 has a marginally significant negative impact,stands for Preliminary estimated construction cost based on the prices at the beginning of the project.
+The linear regression model supports the findings from my previous data visualization analysis.
+
+3.Model Performance:
+Adjusted R-squared: 0.9848: This tells us that the model explains about 98.48% of the changes in actual sales prices (V104). This shows the model is a good fit for the data.But High R-squared with excessive predictors (75 variables) may harm generalizability. We need careful about the overfitting risk for this model.
+F-statistic = 321.9 with a p-value < 2.2e-16, indicating that Model is statistically significant overall.
+
+4.Multicollinearity and undefined coefficients: There are undefined coefficients for 32 predictor variables. This points to a multicollinearity issue. This means some variables are very closely related, making it hard to tell their separate effects. We can use VIF to check for multicollinearity and think about removing or combining variables that are highly correlated.
+---
+
+```{r q2-model-residuals, echo=FALSE, results='asis'}
+cat('
+<ul style="margin-top: 0;">
+  <li><strong>Model Residuals:</strong>
+    <ul>
+      <li>Median residual: -1.50</li>
+      <li>Residual range: -901.15 to 645.31</li>
+    </ul>
+  </li>
+  
+  <br><div style="margin-top: 10px;"></div>
+  
+  The residuals are roughly symmetric around zero, suggesting that the model’s predictions are unbiased on average.  
+However, the wide range from -901.15 to 645.31 highlights considerable variability in error, indicating that the model struggles with extreme values and may benefit from further calibration or transformation strategies for outliers.
+</ul>
+')
+
+
+```
+
+ 
+
+```{r q2-model-coefficients, echo=FALSE, results='asis'}
+cat('
+<ul style="margin-top: 0;">
+  <li><strong>Significant Positive Predictors (p < 0.001):</strong> (Temporal and Financial)
+    <ul>
+      <li><strong>COMPLETION YEAR:</strong> Completion year (β = 152.1)</li>
+      <li><strong>COMPLETION QUARTER:</strong> Quarter project was completed (β = 59.84)</li>
+      <li><strong>V8:</strong> Initial unit price (β = 1.203)</li>
+    </ul>
+  </li>
+  
+  <br><div style="margin-top: 2px;"></div>
+  
+  <li><strong>Significant Negative Predictor (p < 0.001):</strong> (Spatial)
+    <ul>
+      <li><strong>V3:</strong> Lot area (β = -0.2331)</li>
+    </ul>
+    
+    
+    </li>
+    
+  <br><div style="margin-top: 3px;"></div>
+  <li><strong>Moderately Significant Predictors (p < 0.05):</strong> (Spatial)
+    <ul>
+      <li><strong>V1:</strong> Project locality (β = -4.779)</li>
+      <li><strong>V2:</strong> Total floor area (β = 0.0663)</li>
+    </ul>
+  </li>
+  
+  <br><div style="margin-top: 4px;"></div>
+  
+  <li><strong>Marginally Significant Predictor (p < 0.1):</strong> (Finacial)
+    <ul>
+      <li><strong>V5:</strong> Preliminary estimated construction cost (β = -0.6548)</li>
+    </ul>
+  </li>
+  
+  <br><div style="margin-top: 5px;"></div>
+  
+  These coefficients highlight key predictors across temporal, spatial, and financial domains.  Positive effects from completion year, quarter, and unit pricing point to inflationary or market-related growth, while negative effects from lot size and locality suggest spatial cost dilution.
+  
+The model results reinforce prior visual interpretations, adding statistical support to earlier exploratory findings.
+ 
+</ul>
+')
+ 
+```
+
+  
+```{r q2-model-performance, echo=FALSE, results='asis'}
+cat('
+<ul style="margin-top: 0;">
+  <li><strong>Model Fit Statistics:</strong>
+    <ul>
+      <li>Adjusted R²: Proportion of variance explained (0.9848)</li>
+      <li>F-statistic: Overall model significance (321.9)</li>
+      <li>p-value: Global model fit (< 2.2e-16)</li>
+      <li>Number of predictors: Included variables (75)</li>
+    </ul>
+  </li>
+  
+    <br><div style="margin-top: 10px;"></div>
+  
+  The model explains approximately 98.48% of the variance in actual sales prices (V9), indicating a very strong fit. The F-statistic and p-value confirm that the model is statistically significant overall.  
+  
+However, the large number of predictors (75) raises concerns about overfitting and limits generalisability. Caution is warranted in applying this model to new data without further regularisation or variable reduction.
+ 
+</ul>
+')
+
+
+```
+ 
+
+```{r q2-multicollinearity-issues, echo=FALSE, results='asis'} 
+cat('
+<ul style="margin-top: 0;">
+  <li><strong>Multicollinearity Indicators:</strong>The appearance of 32 undefined coefficients points to multicollinearity — where predictors are highly correlated with each other.  This issue reduces interpretability and can destabilize coefficient estimates. 
+  
+To mitigate, consider computing variance inflation factors (VIFs) and removing or consolidating overlapping variables.
+     
+  </li>
+ 
+  
+</ul>
+')
+ 
+```
+ 
+---
+
+### c). Fit a linear regression model to explain the “actual sales price” (V104) in terms of other variables (excluding the variable “actual construction costs” (V105)) using (a) backwards selection and (b) stepwise selection. Compare these two models in terms of outputs, computational time and holdout mean square error. (Hint: summarising your results in a table allows for easy comparison).
+
+
+```{r}
+# Split the data 
+set.seed(123)  # Set seed for reproducibility
+train_index <- sample(1:nrow(Data), 0.8 * nrow(Data))
+train_data <- Data[train_index, ]
+test_data <- Data[-train_index, ]
+
+# Define full model 
+full_model <- lm(V104 ~ . -V105, data = train_data)
+
+# (a) Backwards Selection
+start_time_backward <- Sys.time()
+backward_model <- stepAIC(full_model, direction = "backward", trace = 0)
+end_time_backward <- Sys.time()
+backward_time <- end_time_backward - start_time_backward
+
+backward_pred <- predict(backward_model, newdata = test_data)
+backward_mse <- mean((backward_pred - test_data$V104)^2)
+
+
+# (b) Stepwise Selection
+start_time_stepwise <- Sys.time()
+stepwise_model <- stepAIC(full_model, direction = "both", trace = 0)
+end_time_stepwise <- Sys.time()
+stepwise_time <- end_time_stepwise - start_time_stepwise
+
+stepwise_pred <- predict(stepwise_model, newdata = test_data)
+stepwise_mse <- mean((stepwise_pred - test_data$V104)^2)
+
+
+# Compare models
+comparison_results <- data.frame(
+  Model = c("Backward", "Stepwise"),
+  Variables = c(length(coef(backward_model)), length(coef(stepwise_model))),
+  R_Squared = c(summary(backward_model)$r.squared, summary(stepwise_model)$r.squared),
+  Adj_R2 = c(summary(backward_model)$adj.r.squared, summary(stepwise_model)$adj.r.squared),
+  Time = c(backward_time, stepwise_time),
+  AIC = c(AIC(backward_model), AIC(stepwise_model)),
+  BIC = c(BIC(backward_model), BIC(stepwise_model)),
+  Holdout_MSE = c(backward_mse, stepwise_mse) 
+  )
+  
+print(comparison_results)
+```
+
+
+Base on the table above, it can be found that:
+
+Model Complexity:  The Backward Selection model is more complex,retained 44 variables, while  the Stepwise Selection model is simpler but efficient, including fewer predictors retained 23 variables, resulting in a more parsimonious model, which may improve interpretability and generalizability.
+
+Fit Quality:
+Both models have almost identical R² values, showing similar explanatory power.
+However, Stepwise has a higher adjusted R², which accounts for model complexity 
+
+Model Selection Criteria (AIC & BIC):
+Both AIC and BIC are lower for the Stepwise model, suggesting it achieves better fit with fewer variables.That means it strikes a better balance between model complexity and goodness of fit.
+
+Holdout MSE :
+The Stepwise model has a much lower MSE on the holdout set, suggesting better predictive performance and generalizability.
+
+Computation Time:
+Backward was faster, but given the other metrics, this difference (~3.5s) is likely negligible for most practical purposes.
+
+The Stepwise model is preferred overall: it’s simpler, generalises better, and has better performance on most criteria (especially adjusted R², AIC, BIC, and holdout MSE), despite being a little slower to compute.
+
+### d).Fit a linear regression model to explain the “actual sales price” (V104) in terms of other variables (excluding the variable “actual construction costs” (V105)) using (i) Ridge regression (ii) LASSO regression with an appropriate 𝜆 determined by cross validation. Compare these two models in terms of outputs, computational time and cross validation mean square error.
+
+
+```{r}
+# Use the same training/testing split as previously
+
+# Set cross-validation parameters
+set.seed(123)
+
+# Create model matrix (excluding V105)
+X_train <- model.matrix(V104 ~ . - V105, data = train_data)
+y_train <- train_data$V104
+X_test <- model.matrix(V104 ~ . - V105, data = test_data)
+y_test <- test_data$V104
+
+### ---- (i) Ridge Regression (alpha = 0) ---- ###
+start_ridge <- Sys.time()
+cv_ridge <- cv.glmnet(X_train, y_train, alpha = 0)
+end_ridge <- Sys.time()
+time_ridge <- end_ridge - start_ridge
+
+ridge_best_lambda <- cv_ridge$lambda.min
+best_ridge_mod <- glmnet(X_train, y_train, alpha = 0, lambda = ridge_best_lambda)
+
+ridge_pred <- predict(best_ridge_mod, newx = X_test)
+ridge_mse <- mean((ridge_pred - y_test)^2)
+
+### ---- (ii) LASSO Regression (alpha = 1) ---- ###
+start_lasso <- Sys.time()
+cv_lasso <- cv.glmnet(X_train, y_train, alpha = 1)
+end_lasso <- Sys.time()
+time_lasso <- end_lasso - start_lasso
+
+lasso_best_lambda <- cv_lasso$lambda.min
+best_lasso_mod <- glmnet(X_train, y_train, alpha = 1, lambda = lasso_best_lambda)
+
+lasso_pred <- predict(best_lasso_mod, newx = X_test)
+lasso_mse <- mean((lasso_pred - y_test)^2)
+
+### ---- Cross-validation plot  ---- ###
+par(mfrow = c(1, 2))
+
+plot(cv_ridge, main = "", xlab = "log(Lambda)", ylab = "CV Error")
+title(main = "Ridge: Cross-Validation", line = 2.5) 
+
+plot(cv_lasso, main = "", xlab = "log(Lambda)", ylab = "CV Error")
+title(main = "LASSO: Cross-Validation", line = 2.5) 
+
+par(mfrow = c(1, 1))
+
+### --- Model Comparison Table --- ###
+model_comparison <- data.frame(
+  Model = c("Ridge", "LASSO","Backward", "Stepwise"),
+  Time = c(time_ridge, time_lasso, backward_time, stepwise_time),
+  `CV MSE` = c(min(cv_ridge$cvm), min(cv_lasso$cvm), NA, NA), 
+  `Holdout MSE` = c(ridge_mse, lasso_mse, backward_mse, stepwise_mse),
+  Predictors = c(length(coef(best_ridge_mod))-1, length(which(coef(best_lasso_mod)!=0))-1, 
+                 length(coef(backward_model))-1, length(coef(stepwise_model))-1)
+)
+
+print(model_comparison)
+
+```
+
+
+
+### e). Please give a possible explanation of why one method is better than the other in this case,considering also results from backwards and stepwise selection.
+From the comparison of the four models (Ridge, LASSO, Backward, and Stepwise selection), LASSO demonstrates the best overall performance in this case, and here’s why:
+
+Lower Prediction Error:
+
+LASSO achieves the lowest Holdout MSE (61648.42	) compared to Ridge (92275.39), Backward (89101.99	), and Stepwise (69494.02). This indicates LASSO generalises better to unseen data.Its lower CV MSE (27436.48	) (compared to Ridge’s 48080.05) further validates its robustness.
+
+Computational Efficiency:
+
+LASSO runs much faster (0.125 seconds) than Backward (9.823s) and Stepwise (14.149s), making it scalable for large datasets.Ridge (0.240s) is also fast but performs worse in prediction accuracy.
+
+Variable Sparsity:
+
+LASSO retains only 40 predictors (vs. Ridge’s 108 and Backward’s 43), reducing overfitting risk while maintaining interpretability.Ridge Model keeps all the predictors (108 here), but makes their effects smaller.Stepwise selects fewer predictors (22) but has higher Holdout MSE than LASSO, suggesting it might discard useful variables.
+
+Why LASSO Outperforms Backward/Stepwise:
+
+Automatic Feature Selection: LASSO’s L1 regularization shrinks irrelevant coefficients to exact zero, avoiding the "greedy" pitfalls of stepwise methods, which can get stuck in suboptimal variable subsets.
+
+Handling Multicollinearity: LASSO and Ridge handle correlated predictors better than stepwise methods, which often fail in high-dimensional settings.
+
+While Stepwise is simpler to interpret, its computational cost and higher error make it less practical here.Ridge retains all variables, leading to higher complexity and overfitting.LASSO balances accuracy, speed, and simplicity effectively, making it the superior choice for this dataset. Its ability to select key predictors while minimizing prediction error aligns well with the observed data patterns. 
+
+## Question 2
+
+
+ Step 1: Data Preparation
+
+```{r}
+
+# Load the Parkinson's dataset
+parkinsons_data <- read.csv("../data/parkinsons.csv", header = TRUE)[-1]
+
+# Function to split and scale data
+prepare_data <- function(data, seed) {
+  set.seed(seed)
+  n <- nrow(data)
+  train_indices <- sample(1:n, 30)
+  
+  train_data <- data[train_indices, ]
+  test_data <- data[-train_indices, ]
+  
+  X_train <- as.matrix(train_data[, paste0("X", 1:97)])
+  y_train <- train_data$UPDRS
+  X_test <- as.matrix(test_data[, paste0("X", 1:97)])
+  y_test <- test_data$UPDRS
+  
+  X_train_scaled <- scale(X_train)
+  X_test_scaled <- scale(X_test, 
+                         center = attr(X_train_scaled, "scaled:center"), 
+                         scale = attr(X_train_scaled, "scaled:scale"))
+  
+  return(list(
+    X_train = X_train_scaled,
+    y_train = y_train,
+    X_test = X_test_scaled,
+    y_test = y_test
+  ))
+}
+```
+
+
+### a). Confirm that a linear model can fit the training data exactly. Why is this model not going to be useful?
+
+```{r, results='asis'}
+lm_data <- prepare_data(parkinsons_data, 123)
+
+# Fit a linear model
+lm_model <- lm(lm_data$y_train ~ lm_data$X_train)
+#summary(lm_model)
+html_summary(lm_model, title = "trial") 
+```
+The R-squared value of 1 indicates a perfect fit on the training data. However, this is likely due to overfitting, as the model is using 97 predictors with only 30 observations. In such cases, the model memorises the data instead of learning meaningful relationships, which results in poor generalization to new data.
+
+### b). Now use the LASSO to fit the training data, using leave-one-out cross-validation to find the tuning parameter 𝜆. (This means 𝑛𝑓𝑜𝑙𝑑𝑠 = 30. You will also find it convenient to set 𝑔𝑟𝑖𝑑 = 10\^𝑠𝑒𝑞(3,−1,100) and 𝑡ℎ𝑟𝑒𝑠ℎ = 1𝑒 −10). What is the optimal value of 𝜆? and what is the resulting test error?
+### c). State your final model for the UPDRS. How many features have been selected? What conclusions can you draw?
+```{r}
+# General LASSO function to fit and return key results
+lasso_regression <- function(X_train, y_train, X_test, y_test) {
+  # Define lambda grid for tuning
+  grid <- 10^seq(3, -1, length.out = 100)
+
+  # Perform Leave-One-Out Cross-Validation
+  lasso_cv <- cv.glmnet(X_train, y_train, alpha = 1, lambda = grid,
+                        nfolds = nrow(X_train), thresh = 1e-10)
+
+  # Extract the best lambda value
+  optimal_lambda <- lasso_cv$lambda.min
+
+  # Fit final LASSO model using the best lambda
+  lasso_model <- glmnet(X_train, y_train, alpha = 1, lambda = optimal_lambda)
+
+  # Predict on the test set and compute mean squared error
+  y_pred <- predict(lasso_model, newx = X_test)
+  test_error <- mean((y_test - y_pred)^2)
+
+  # Get the names of selected (non-zero) features
+  coef_full <- coef(lasso_model)
+  selected_features <- rownames(coef_full)[coef_full[, 1] != 0][-1]
+
+  # Build the final model formula as a string
+  formula_terms <- sprintf("%.4f * %s", coef_full[selected_features, 1], selected_features)
+  formula_str <- paste("UPDRS =", round(coef_full[1,1], 4), "+", paste(formula_terms, collapse = " + "))
+
+  # Return results
+  return(list(
+    lambda = optimal_lambda,
+    test_error = test_error,
+    selected_features = selected_features,
+    n_nonzero = length(selected_features),
+    formula = formula_str,
+    cv_plot = lasso_cv
+  ))
+}
+
+
+# Prepare data and fit the model
+data123 <- prepare_data(parkinsons_data, 123)
+result123 <- lasso_regression(data123$X_train, data123$y_train, data123$X_test, data123$y_test)
+
+# Plot cross-validation errors vs. log(lambda)
+plot(result123$cv_plot)
+
+# Print key results
+cat("Best lambda:", result123$lambda, "\n")
+cat("Test set MSE:", result123$test_error, "\n")
+cat("Number of selected features:", result123$n_nonzero, "\n")
+cat("Selected features:", paste(result123$selected_features, collapse = ", "), "\n")
+cat("LASSO model equation:\n", result123$formula, "\n")
+
+
+```
+The LASSO regression identified a lambda value (≈1.02) that minimised cross-validated MSE, resulting in a model with only four non-zero coefficients: X9, X82, X83, and X97. This demonstrates strong feature selection capability, improving interpretability and reducing overfitting risks. 
+ The resulting formula list below:
+$$
+\text{UPDRS} = 26.1423 + 0.2039 \times X_9 + 0.0586 \times X_{82} + 0.3937 \times X_{83} + 7.0572 \times X_{97}
+$$
+With LASSO, the final model includes only four key predictors, which significantly improves interpretability. The coefficients provide direct insight into how each selected feature contributes to the UPDRS score. This sparse model performs well (MSE ≈ 20.4), showing a good balance between accuracy and simplicity.
+
+### d). Repeat your analysis with a different random split of the training and test sets. Have the same features been selected in your final model?
+```{r}
+# Prepare data with a different seed and fit the model
+data321 <- prepare_data(parkinsons_data, 321)
+result321 <- lasso_regression(data321$X_train, data321$y_train, data321$X_test, data321$y_test)
+
+# Plot cross-validation result
+plot(result321$cv_plot)
+
+# Print key results
+cat("Best lambda:", result321$lambda, "\n")
+cat("Test set MSE:", result321$test_error, "\n")
+cat("Number of selected features:", result321$n_nonzero, "\n")
+cat("Selected features:", paste(result321$selected_features, collapse = ", "), "\n")
+cat("LASSO model equation:\n", result321$formula, "\n")
+
+# Build a comparison table of the two models
+comparison_table <- data.frame(
+  Seed = c(123, 321),
+  Optimal_Lambda = c(result123$lambda, result321$lambda),
+  Test_MSE = c(result123$test_error, result321$test_error),
+  Num_Selected_Features = c(result123$n_nonzero, result321$n_nonzero),
+  Selected_Features = c(
+    paste(result123$selected_features, collapse = ", "),
+    paste(result321$selected_features, collapse = ", ")
+  )
+)
+
+# Display the table 
+print(comparison_table)
+
+```
+
+When We repeated the analysis with a different random seed (from 123 to 321), which changed the training-test split. 
+The test set Mean Squared Error (MSE) for the previous dataset was 20.414054, while for the new dataset, it decreased to 4.899441. This reduction indicates that the model trained with the new dataset performs better on the test set. 
+
+The final model selected a slightly different set of features.
+Under seed = 123, the selected features were: X9, X82, X83, X97
+Under seed = 321, the selected features were: X83, X95, X97
+
+While some features like X83 and X97 appeared in both models, others (e.g., X9, X82 and X95) were different. This indicates that the feature selection process is sensitive to the specific training-test split and that small changes in data partitioning can lead to different optimal subsets.
+
+The final model formula list below:
+\[
+\text{UPDRS} = 25.4929 + 0.2028 \times X_{83} + 0.2533 \times X_{95} + 9.0117 \times X_{97}
+\]
+
+
+## Question 3
+
+### a). Train an ElasticNet model to predict MEAN_ANNUAL_RAINFALL using 10-fold cross-validation to optimise values for 𝛼 and 𝜆.
+1. Data Preparation and Splitting
+```{r}
+# Load the data
+weather_data <- read.csv("../data/Weather_Station_Data_v1.csv")
+
+# Set seed for reproducibility
+set.seed(321)
+
+# Split the data into training and test sets
+train_indices <- sample(1:nrow(weather_data), size = 0.8 * nrow(weather_data))
+train_data <- weather_data[train_indices, ]
+test_data <- weather_data[-train_indices, ]
+
+# Define predictors and response
+X_train <- as.matrix(train_data[, -which(names(train_data) == "MEAN_ANNUAL_RAINFALL")])
+y_train <- train_data$MEAN_ANNUAL_RAINFALL
+X_test <- as.matrix(test_data[, -which(names(test_data) == "MEAN_ANNUAL_RAINFALL")])
+y_test <- test_data$MEAN_ANNUAL_RAINFALL
+
+```
+
+2. ElasticNet Model with Cross-Validation
+```{r}
+# Define a sequence of alpha values
+alphas <- seq(0, 1, by = 0.1)
+
+# Perform cross-validation for each alpha
+cv_results <- lapply(alphas, function(a) {
+  cv.glmnet(X_train, y_train, alpha = a, nfolds = 10)
+})
+
+# Find the best model based on minimum cross-validated error
+best_alpha_idx <- which.min(sapply(cv_results, function(cv) min(cv$cvm)))
+best_cv_mod <- cv_results[[best_alpha_idx]]
+best_alpha <- alphas[best_alpha_idx]
+
+cat("Best alpha selected is:", best_alpha, "\n")
+```
+
+Base on the cross validation, the best alpha of Elastic Net in this dataset is 0.3, in the next step, the alpha will be set to 0.3 to obtain the best result.
+
+### b). Plot the cross-validation results for your model
+
+```{r}
+lambda_min <- best_cv_mod$lambda.min
+lambda_1se <- best_cv_mod$lambda.1se
+
+# Plot the cross-validation results
+plot(best_cv_mod, main = "", xlab = "Log(lambda)", ylab = "Mean Squared Error")
+title(main = "ElasticNet Cross-Validation Results", line = 2)
+abline(v = log(lambda_min), col = "green", lty = 2)
+abline(v = log(lambda_1se), col = "red", lty = 2)
+legend("topright", legend = c("lambda.min", "lambda.1se"),
+       col = c("green", "red"), lty = 2, bty = "n")
+
+cat("The value of Lambda.min is: ", lambda_min, "\n")
+cat("The value of Lambda.1se is: ", lambda_1se, "\n")
+
+```
+The plot shows the mean squared error (MSE) across different values of lambda. The green line represents `lambda.min` (with lowest MSE), and the red line is `lambda.1se` (within one standard error for simpler model).
+
+
+### c). Make predictions on your test set using both lambda.min and lambda.1se, show the coeff icients of each model, report the MSE and/or RMSE of both, and the number of predictors used in each model.
+
+```{r}
+# Predictions
+pred_min <- predict(best_cv_mod, s = "lambda.min", newx = X_test)
+pred_1se <- predict(best_cv_mod, s = "lambda.1se", newx = X_test)
+
+# Calculate MSE and RMSE
+mse_min <- mean((y_test - pred_min)^2)
+rmse_min <- sqrt(mse_min)
+
+mse_1se <- mean((y_test - pred_1se)^2)
+rmse_1se <- sqrt(mse_1se)
+
+# Count non-zero coefficients
+coef_min <- coef(best_cv_mod, s = "lambda.min")
+coef_1se <- coef(best_cv_mod, s = "lambda.1se")
+n_pred_min <- sum(coef_min != 0) - 1  # exclude intercept
+n_pred_1se <- sum(coef_1se != 0) - 1
+
+# Create summary table
+comparison_table <- data.frame(
+  Model = c("lambda.min", "lambda.1se"),
+  Alpha = c(best_alpha, best_alpha),
+  Lambda = c(lambda_min, lambda_1se),
+  MSE = c(mse_min, mse_1se),
+  RMSE = c(rmse_min, rmse_1se),
+  Predictors_Used = c(n_pred_min, n_pred_1se)
+)
+
+print(comparison_table)
+
+# Extract and display coefficients
+coef_table_min <- data.frame(
+  Variable = rownames(as.matrix(coef_min)),
+  Coefficient = round(as.vector(coef_min), 4)
+)
+
+coef_table_1se <- data.frame(
+  Variable = rownames(as.matrix(coef_1se)),
+  Coefficient = round(as.vector(coef_1se), 4)
+)
+
+cat("Coefficients for lambda.min:\n")
+print(coef_table_min)
+
+cat("Coefficients for lambda.1se:\n")
+print(coef_table_1se)
+
+```
+
+### d).Which model would you choose? Justify your answer.
+
+Based on the comparison of the two models using lambda.min and lambda.1se,We evaluated two elastic net regression models with alpha = 0.3, using lambda.min and lambda.1se. The model with lambda.min had a lower MSE of 11,412.89 and RMSE of 106.83, while the lambda.1se model had a slightly higher MSE of 13,078.75 and RMSE of 114.36.
+
+In terms of complexity, the lambda.min model used 13 predictors, whereas the lambda.1se model used only 9 predictors, indicating stronger regularization.
+
+This shows a typical trade-off:
+lambda.min provides better predictive accuracy, but with more variables in the model.
+lambda.1se gives a more parsimonious model (fewer predictors), which may be preferred for simplicity or interpretability, even at the cost of slightly higher error.
+
+In real-world applications, especially when working with environmental or climate-related data, interpretability and generalizability are often more important than marginal gains in accuracy. A simpler model is also easier to communicate and deploy.
+
+Therefore, the lambda.1se model strikes a better balance between performance and model simplicity.
+
+The formula for the final model is as follows:
+$$
+\begin{aligned}
+\hat{Y} =\ & 612.3961 \\
+&+ 0.1671 \cdot \text{ALTITUDE} \\
+&- 4.9645 \cdot \text{MEAN\_ANNUAL\_AIR\_TEMP} \\
+&- 1.0373 \cdot \text{MEAN\_MONTHLY\_MIN\_TEMP} \\
+&- 8.0770 \cdot \text{MEAN\_ANNUAL\_WIND\_SPEED} \\
+&+ 1.6533 \cdot \text{MEAN\_CLOUD\_COVER} \\
+&- 0.0031 \cdot \text{MEAN\_ANNUAL\_SUNSHINE} \\
+&- 16.0839 \cdot \text{MAX\_AIR\_TEMP} \\
+&+ 19.1592 \cdot \text{MAX\_RAINFALL} \\
+&+ 9.3296 \cdot \text{MIN\_AIR\_TEMP}
+\end{aligned}
+$$
+
+

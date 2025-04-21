@@ -67,7 +67,6 @@ plot_cor_heatmap <- function(data, vars, title = "Correlation Heatmap",
   # Extract subset of variables
   selected_vars <- data[, vars, drop = FALSE]
   
-  # Calculate correlation matrix
   cor_matrix <- cor(selected_vars, use = "complete.obs")
   
   # Plot interactive heatmap
@@ -88,7 +87,7 @@ plot_cor_heatmap <- function(data, vars, title = "Correlation Heatmap",
 
 ```
 
-#### **Step 2: Visualize Correlations by Category**
+#### **Step 2: Visualise Correlations by Category**
 
 1.Time Variables vs. Outputs
 ```{r}
@@ -196,52 +195,93 @@ heatmap_list[[4]]
 heatmap_list[[5]]  
 ```
 Economic Variables vs. Output Variables – Observations
-
-Based on the five heatmap visualizations showing economic variables at different time lags (Lag1 through Lag5), I found some interesting patterns about  correlations between the economic indicators and project outputs:
-
- 1.Interest Rate Effects (V18/V37/V56/V75/V94) consistently show strong negative correlations (deep red) with most other economic variables across all time lags.
-The negative correlation persists across all five time lags, suggesting a consistent long-term relationshipion persists across all five time lags, suggesting a consistent long-term relationship
-
-2.Throughout all five time periods, variables V10 (Building services index), V11 (Wholesale price index of building materials), V13 (Cumulative liquidity), V14 (Private sector investment in new buildings), V15 (Land price index), V19 (Average construction cost at completion), V20 (Average construction cost at beginning), V23 (Consumer price index), V24 (CPI of housing, water, fuel & power), and V27 (Gold price per ounce) demonstrate extraordinarily high correlation coefficients with each other.
-These correlation values range from a minimum of 0.88 to a maximum of 0.999, approaching perfect correlation. Not only do these variables show strong internal correlations among themselves, but they also consistently exhibit similar positive correlations with the project output variables V104 (Actual sales prices) and V105 (Actual construction costs) across all time lags.
-This consistent pattern suggests these ten economic indicators move almost in unison and have a uniformly positive influence on both construction costs and sales prices throughout different time periods. The stability of these relationships across all time lags indicates they represent fundamental and reliable economic drivers in the construction and real estate markets.
-
----
-
-2.Across all five time periods, a group of variables — like the Building Services Index (V10), Land Price Index (V15), Gold Price (V27), and several others — show extremely strong correlations with one another, with values as high as 0.999. These indicators clearly move together, almost like a single unit. What's more, they also maintain consistent, strong positive correlations with key project outcomes like actual sales prices (V104) and construction costs (V105). This suggests that these ten variables are not only tightly linked to each other but also play a major role in influencing both pricing and costs in construction. Their steady behaviour across time lags points to them being core economic drivers in the construction and real estate sectors.
-
----
  
+```{r q1-correlation-int-rate-cluster, echo=FALSE, results='asis'}
+cat('
+<p>A long-term negative relationship with economic indicators is explained by Interest Rate Effects captured by variables representing "The number of loans extended by banks" in:</p>
+
+<ul style="margin-top: 0;">
+  <li><strong>V18:</strong> time lag 1, </li>
+  <li><strong>V37:</strong> time lag 2, </li>
+  <li><strong>V56:</strong> time lag 3, </li>
+  <li><strong>V75:</strong> time lag 4, and </li>
+  <li><strong>V94:</strong> in time lag 5. </li>
+</ul>
+')
+
+cat('
+This indicates a strong inverse relationship between banking loan volume and downstream economic activity. The consistency across all five lags suggests that tighter lending conditions constrains real estate market activites, including building permits, floor area expansions, and sales prices. Such correlations align with current events and macroeconomic theory: as borrowing costs increase, construction and investment activity tend to decelerate, hender economic growth.
+')
+```
+ 
+---
+
 ```{r, results='asis', echo=FALSE}
 cat('
-<p><strong>2. A core group of variables — including:</strong></p>
+<p> Across all five time periods, a group of variables: </p>
 <ul style="margin-top: 0;">
-  <li>V10: Building Services Index</li>
-  <li>V11: Wholesale Price Index of Building Materials</li>
-  <li>V13: Cumulative Liquidity</li>
-  <li>V14: Private Sector Investment in New Buildings</li>
-  <li>V15: Land Price Index</li>
-  <li>V19: Average Construction Cost at Completion</li>
-  <li>V20: Average Construction Cost at Beginning</li>
-  <li>V23: Consumer Price Index</li>
-  <li>V24: CPI of Housing, Water, Fuel & Power</li>
-  <li>V27: Gold Price per Ounce</li>
+  <li>V10: Building Services Index,</li>
+  <li>V11: Wholesale Price Index of Building Materials,</li>
+  <li>V13: Cumulative Liquidity,</li>
+  <li>V14: Private Sector Investment in New Buildings,</li>
+  <li>V15: Land Price Index,</li>
+  <li>V19: Average Construction Cost at Completion,</li>
+  <li>V20: Average Construction Cost at Beginning,</li>
+  <li>V23: Consumer Price Index, </li>
+  <li>V24: CPI of Housing, Water, Fuel & Power, and</li>
+  <li>V27: Gold Price per Ounce </li>
 </ul>
 
-<p style="margin-left: 0;"> These ten variables consistently show very high internal correlations, ranging from <strong>0.88 to 0.999</strong>, suggesting they move almost in unison. They also exhibit <strong>strong and consistent positive correlations</strong> with:</p>
+<p style="margin-left: 0;"> show high correlations, (0.88 - 0.999),  with:</p>
 
 <ul>
-  <li>V104: Actual Sales Prices</li>
-  <li>V105: Actual Construction Costs</li>
+  <li>V104: Actual Sales Prices, and</li>
+  <li>V105: Actual Construction Costs.</li>
 </ul>
 
-<p style="margin-left: 0;">This pattern holds across <strong>all five time lags</strong>, highlighting the <strong>stability and reliability</strong> of these relationships. This consistent pattern suggests these ten economic indicators move almost in unison and have a uniformly positive influence on both construction costs and sales prices throughout different time periods. The stability of these relationships across all time lags indicates they represent <strong>fundamental and reliable economic drivers</strong> in the construction and real estate markets.</p>
+<p style="margin-left: 0;">As these are consitant across the five time lags, there is a potential for   strong and reliable relationships. The ten economic indicators move in lockstep and indicate positive influencees on construction costs and sales prices, independant of time periods. This stability of  relationships across all time lags, indicates potentially fundamental and reliable model of economic drivers for construction and real estate markets.</p>
 ')
 ```
 
 ---
 
-3.The clustering in the dendrogram shows V9 (number of building permits issued) and V12 (total floor areas of building permits issued), as well as V16 (number of loans extended by banks) and V26 (population of the city), grouped closely together, confirming their strong relationships. The colour between each pair is deeper blue, while being lighter with other variables, suggesting strong positive correlations within these two groups and relatively weak relationships with other variables. This pattern logically reflects that building permit counts and the total floor area of those permits are inherently linked, while the number of loans extended by banks naturally correlates with the city's population size.
+```{r dendrogram, results='asis', echo=FALSE}
+cat('
+<p>The dendrogram and accompanying correlation heatmap reveal two distinct clusters of closely related variables:</p>
+
+<ul style="margin-top: 0;">
+  <li><strong>Building Activity Indicators:</strong>
+    <ul>
+      <li><strong>V9:</strong> Number of building permits issued, and</li>
+      <li><strong>V12:</strong> Total floor area of building permits issued.</li>
+    </ul>
+     
+<p>These variables cluster tightly, reflecting a strong positive correlation, and are visually confirmed by a deep blue hue in the heatmap. This relationship is intuitive, as a higher number of building permits typically entails a greater cumulative floor area.</p>
+ </ul>
+<ul style="margin-top: 0;">
+  <li><strong>Economic and Demographic Drivers:</strong>
+    <ul>
+      <li><strong>V16:</strong> Number of loans extended by banks,</li>
+      <li><strong>V26:</strong> Population of the city</li>
+    </ul>
+     
+<p>These variables also appear in close proximity, with similarly strong positive correlation (deep blue), suggesting that more populous cities tend to receive more bank loans—likely due to greater economic activity and housing demand.</p>
+  
+</ul>
+
+<p>In contrast, both pairs exhibit weaker correlations with other variables, as indicated by lighter blue shades elsewhere in the heatmap. This clustering structure underscores two coherent real-world mechanisms:</p>
+
+<ul style="margin-top: 0;">
+  <li>Permitting volume and size are administratively and physically linked,</li>
+  <li>Loan issuance scales naturally with population-driven economic dynamics.</li>
+</ul>
+')
+```
+
+
+---
+
+
 
 
 ### b). Please fit a linear regression model to explain the “actual sales price” (V104) in terms of the of the other variables excluding the variable “actual construction costs” (V105). Explain the output provided by the summary function.
@@ -336,7 +376,7 @@ The Stepwise model has a much lower MSE on the holdout set, suggesting better pr
 Computation Time:
 Backward was faster, but given the other metrics, this difference (~3.5s) is likely negligible for most practical purposes.
 
-The Stepwise model is preferred overall: it’s simpler, generalizes better, and has better performance on most criteria (especially adjusted R², AIC, BIC, and holdout MSE), despite being a little slower to compute.
+The Stepwise model is preferred overall: it’s simpler, generalises better, and has better performance on most criteria (especially adjusted R², AIC, BIC, and holdout MSE), despite being a little slower to compute.
 
 ### d).Fit a linear regression model to explain the “actual sales price” (V104) in terms of other variables (excluding the variable “actual construction costs” (V105)) using (i) Ridge regression (ii) LASSO regression with an appropriate 𝜆 determined by cross validation. Compare these two models in terms of outputs, computational time and cross validation mean square error.
 
@@ -409,7 +449,7 @@ From the comparison of the four models (Ridge, LASSO, Backward, and Stepwise sel
 
 Lower Prediction Error:
 
-LASSO achieves the lowest Holdout MSE (61648.42	) compared to Ridge (92275.39), Backward (89101.99	), and Stepwise (69494.02). This indicates LASSO generalizes better to unseen data.Its lower CV MSE (27436.48	) (compared to Ridge’s 48080.05) further validates its robustness.
+LASSO achieves the lowest Holdout MSE (61648.42	) compared to Ridge (92275.39), Backward (89101.99	), and Stepwise (69494.02). This indicates LASSO generalises better to unseen data.Its lower CV MSE (27436.48	) (compared to Ridge’s 48080.05) further validates its robustness.
 
 Computational Efficiency:
 
@@ -476,7 +516,7 @@ lm_model <- lm(lm_data$y_train ~ lm_data$X_train)
 #summary(lm_model)
 html_summary(lm_model, title = "trial") 
 ```
-The R-squared value of 1 indicates a perfect fit on the training data. However, this is likely due to overfitting, as the model is using 97 predictors with only 30 observations. In such cases, the model memorizes the data instead of learning meaningful relationships, which results in poor generalization to new data.
+The R-squared value of 1 indicates a perfect fit on the training data. However, this is likely due to overfitting, as the model is using 97 predictors with only 30 observations. In such cases, the model memorises the data instead of learning meaningful relationships, which results in poor generalization to new data.
 
 ### b). Now use the LASSO to fit the training data, using leave-one-out cross-validation to find the tuning parameter 𝜆. (This means 𝑛𝑓𝑜𝑙𝑑𝑠 = 30. You will also find it convenient to set 𝑔𝑟𝑖𝑑 = 10\^𝑠𝑒𝑞(3,−1,100) and 𝑡ℎ𝑟𝑒𝑠ℎ = 1𝑒 −10). What is the optimal value of 𝜆? and what is the resulting test error?
 ### c). State your final model for the UPDRS. How many features have been selected? What conclusions can you draw?
@@ -536,7 +576,7 @@ cat("LASSO model equation:\n", result123$formula, "\n")
 
 
 ```
-The LASSO regression identified a lambda value (≈1.02) that minimized cross-validated MSE, resulting in a model with only four non-zero coefficients: X9, X82, X83, and X97. This demonstrates strong feature selection capability, improving interpretability and reducing overfitting risks. 
+The LASSO regression identified a lambda value (≈1.02) that minimised cross-validated MSE, resulting in a model with only four non-zero coefficients: X9, X82, X83, and X97. This demonstrates strong feature selection capability, improving interpretability and reducing overfitting risks. 
  The resulting formula list below:
 $$
 \text{UPDRS} = 26.1423 + 0.2039 \times X_9 + 0.0586 \times X_{82} + 0.3937 \times X_{83} + 7.0572 \times X_{97}
@@ -593,7 +633,7 @@ The final model formula list below:
 
 ## Question 3
 
-### a). Train an ElasticNet model to predict MEAN_ANNUAL_RAINFALL using 10-fold cross-validation to optimize values for 𝛼 and 𝜆.
+### a). Train an ElasticNet model to predict MEAN_ANNUAL_RAINFALL using 10-fold cross-validation to optimise values for 𝛼 and 𝜆.
 1. Data Preparation and Splitting
 ```{r}
 # Load the data
