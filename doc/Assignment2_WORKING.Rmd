@@ -14,8 +14,29 @@ library(heatmaply)
 library(MASS)
 library(knitr)
 library(glmnet)
+library(glue)
 library(fs)
+
+#----------------- LILLIAN CHANGE THIS ------------------
+#----------------- LILLIAN CHANGE THIS ------------------
+#----------------- LILLIAN CHANGE THIS ------------------
+
 data_folder         <- "../data/"  # David's file structure
+#data_folder        <- "./"        # Lillian's file structure
+
+```
+
+```{r q1b-summary-scrollbox, echo=FALSE, results='asis'}
+html_summary <- function(model, title = "Model Summary") {
+  summary_text <- capture.output(summary(model))
+  
+  cat(glue::glue("<h4>{title}</h4>\n"))
+  cat('<div style="border:1px solid #ccc; padding:10px; max-height:300px; overflow:auto; font-family:monospace; background:#f9f9f9;">\n')
+  cat("<pre>\n")
+  cat(paste(summary_text, collapse = "\n"))
+  cat("\n</pre>\n")
+  cat("</div>\n")
+} 
 ```
 
 ## Question 1
@@ -78,7 +99,7 @@ plot_cor_heatmap <- function(data, vars, title = "Correlation Heatmap",
 
 ```
 
-#### **Step 2: Visualize Correlations by Category**
+#### **Step 2: Visual ise Correlations by Category**
 
 1.Time Variables vs. Outputs
 ```{r}
@@ -116,7 +137,7 @@ cor_time_output
 
 ```
  
-1A
+ 
 
 ```{r q1-correlation-v100-v101, echo=FALSE, results='asis'}
 cat('
@@ -133,7 +154,7 @@ cat('
     </ul>
   </li>
   
-   The correlation between <strong>V100</strong> and <strong>V101</strong>  is extremely high (r = 0.988), indicating that project start and completion years are nearly linearly aligned. This pattern reflects the  stability of construction durations across projects, where scheduling norms and   timelines result in tightly coupled milestone years
+   The correlation between <strong>V100</strong> and <strong>V101</strong>  is high(r = 0.988), indicating that project start and completion years are nearly linearly aligned. This shows the  stability of construction durations across projects, where scheduling norms and   timelines result in tightly coupled milestone years
 
 </ul>
 ')
@@ -211,41 +232,7 @@ cat('
 
 ```
 
-```{r q1-correlation-high-economic-indicators, results='asis', echo=FALSE}
-cat('
-<ul style="margin-top: 0;">
-  <li><strong>Highly Correlated Economic Indicators:</strong>
-    <ul>
-      <li>V10: Building services index</li>
-      <li>V11: Wholesale price index of building materials</li>
-      <li>V13: Cumulative liquidity</li>
-      <li>V14: Private sector investment in new buildings</li>
-      <li>V15: Land price index</li>
-      <li>V19: Average construction cost at completion</li>
-      <li>V20: Average construction cost at beginning</li>
-      <li>V23: Consumer price index</li>
-      <li>V24: CPI of housing, water, fuel & power</li>
-      <li>V27: Gold price per ounce</li>
-    </ul>
-    These variables exhibit extremely strong mutual correlations across all five time lags, with coefficients ranging from 0.88 to 0.999. This level of alignment suggests they move as a tightly knit group of economic drivers.
-  </li>
-
-  <li><strong>Connection to Output Variables:</strong>
-    <ul>
-      <li>Each of these indicators shows consistently positive correlation with V104 (Actual Sales Price) and V105 (Actual Construction Cost).</li>
-    </ul>
-    These relationships indicate that macroeconomic fundamentals like investment, inflation, and pricing indices play a substantial role in shaping both cost and pricing structures in residential construction.
-  </li>
-
-  <li><strong>Stability Across Time Lags:</strong>
-    <ul>
-      <li>These correlations remain strong and consistent across all five economic lag periods (T1–T5).</li>
-    </ul>
-    This consistency reinforces their interpretive and predictive value as fundamental long-term drivers of real estate market dynamics.
-  </li>
-</ul>
-')
-```
+ 
 
 
 2.Project Variables vs. Outputs
@@ -261,8 +248,7 @@ cor_project_output
 
 ```
 
-s
-
+ 
 
 ```{r q1-correlation-v104-v5-v8, echo=FALSE, results='asis'}
 cat('
@@ -378,22 +364,17 @@ heatmap_list[[3]]
 heatmap_list[[4]]  
 heatmap_list[[5]]  
 ```
-Economic Variables vs. Output Variables – Observations
 
-Based on the five heatmap visualizations showing economic variables at different time lags (Lag1 through Lag5), I found some interesting patterns about  correlations between the economic indicators and project outputs:
-
- 1.Interest Rate Effects (V18/V37/V56/V75/V94) consistently show strong negative correlations (deep red) with most other economic variables across all time lags.
-The negative correlation persists across all five time lags, suggesting a consistent long-term relationshipion persists across all five time lags, suggesting a consistent long-term relationship
-
-2.Throughout all five time periods, variables V10 (Building services index), V11 (Wholesale price index of building materials), V13 (Cumulative liquidity), V14 (Private sector investment in new buildings), V15 (Land price index), V19 (Average construction cost at completion), V20 (Average construction cost at beginning), V23 (Consumer price index), V24 (CPI of housing, water, fuel & power), and V27 (Gold price per ounce) demonstrate extraordinarily high correlation coefficients with each other.
-These correlation values range from a minimum of 0.88 to a maximum of 0.999, approaching perfect correlation. Not only do these variables show strong internal correlations among themselves, but they also consistently exhibit similar positive correlations with the project output variables V104 (Actual sales prices) and V105 (Actual construction costs) across all time lags.
-This consistent pattern suggests these ten economic indicators move almost in unison and have a uniformly positive influence on both construction costs and sales prices throughout different time periods. The stability of these relationships across all time lags indicates they represent fundamental and reliable economic drivers in the construction and real estate markets.
-
-3.The clustering in the dendrogram shows V9 (number of building permits issued) and V12 (total floor areas of building permits issued), as well as V16 (number of loans extended by banks) and V26 (population of the city), grouped closely together, confirming their strong relationships. The color between each pair is deeper blue, while being lighter with other variables, suggesting strong positive correlations within these two groups and relatively weak relationships with other variables. This pattern logically reflects that building permit counts and the total floor area of those permits are inherently linked, while the number of loans extended by banks naturally correlates with the city's population size.
+ 
 
 
 ```{r q1-correlation-int-rate-cluster, echo=FALSE, results='asis'}
 cat('
+
+<h4>Economic Variables vs. Output Variables – Observations</h4>
+<p>Based on the five heatmap visual isations showing economic variables at different time lags (Lag1 through Lag5), I found some interesting patterns about correlations between the economic indicators and project outputs:</p>
+
+
 <p>A long-term negative relationship with economic indicators is explained by Interest Rate Effects captured by variables representing "The number of loans extended by banks" in:</p>
 
 <ul style="margin-top: 0;">
@@ -426,22 +407,26 @@ cat('
       <li>V24: CPI of housing, water, fuel & power</li>
       <li>V27: Gold price per ounce</li>
     </ul>
-    These variables demonstrate extraordinarily high internal correlation across all five time periods, with values ranging from 0.88 to 0.999 — approaching perfect alignment.
   </li>
 
+    These variables demonstrate extraordinarily high internal correlation across all five time periods, with values ranging from 0.88 to 0.999 — approaching perfect alignment.
+  </ul>
+<ul style="margin-top: 0;">
+  
   <li><strong>Relationships with Project Outputs:</strong>
     <ul>
       <li>Each of these indicators shows consistently strong positive correlations with V104 (Actual Sales Price) and V105 (Actual Construction Cost).</li>
-    </ul>
+    </ul></li>
     This indicates that economic fundamentals drive both cost structures and pricing outcomes in residential construction.
-  </li>
-
+  
+ </ul>
+<ul style="margin-top: 0;">
   <li><strong>Cross-Lag Stability:</strong>
     <ul>
       <li>Correlations remain strong across all five time lags, unaffected by temporal shifts.</li>
     </ul>
-    This suggests these indicators represent stable, long-term drivers of market behavior — providing predictive utility for both cost planning and pricing strategy.
   </li>
+    This suggests these indicators represent stable, long-term drivers of market behavior — providing predictive utility for both cost planning and pricing strategy.
 </ul>
 ')
 ```
@@ -481,27 +466,60 @@ cat('
 
 ### b). Please fit a linear regression model to explain the “actual sales 
 
-```{r}
+```{r, results='asis'}
 lr_model <- lm(V104~ . - V105,data = Data)
-summary(lr_model)
+#summary(lr_model)
+html_summary(lr_model)
+
 ```
 
 From the summary of the linear regression model, we can find that:
 
-1.Residuals: 
-Residuals are roughly symmetric around zero (median = -1.50), indicating indicating unbiased predictions on average.However, residuals range widely (-901.15 to 645.31), suggesting the model struggles with extreme values.
+```{r q1b-lm-summary-interpretation, results='asis', echo=FALSE}
+cat('
+<ul style="margin-top: 0;">
+  <li><strong>Residual Distribution:</strong>
+    <ul>
+      <li>Residuals are roughly symmetric around zero (median = -1.50), indicating unbiased predictions on average.</li>
+      <li>The wide residual range (from -901.15 to 645.31) suggests the model struggles with extreme values.</li>
+    </ul>
+  </li>
 
-2.Coefficients and Significance：
-COMPLETION YEAR (β = 152.1, p < 0.001) and COMPLETION QUARTER (β = 59.84, p < 0.001): These two variables both have a significant positive impact on the model, indicating that the completion year and quarter are crucial predictors of the outcome.
-V3(β = -0.2331, p < 0.001) and V8(β = 1.203, p < 0.001)：V3 has a significant negative impact, while V8 has a significant positive impact,, with V3  stands for  Lot area and V8 to Price of the unit at the beginning of the project per m2.
-V1(β = -4.779, p < 0.05) and V2(β = 0.0663, p < 0.05):V1 has a significant negative impact, while V2 has a significant positive impact. at the 0.05 level, with V1  stands for project locality and V2 to total floor area of the buildings.
-V5(β = -0.6548, p < 0.1) ：V5 has a marginally significant negative impact,stands for Preliminary estimated construction cost based on the prices at the beginning of the project.
-The linear regression model supports the findings from my previous data visualization analysis.
+    This pattern reflects good central performance but potential issues with outliers.
+    </ul><ul style="margin-top: 0;">
+  <li><strong>Coefficient Significance:</strong>
+    <ul>
+      <li><strong>COMPLETION YEAR</strong> (β = 152.1, p < 0.001) and <strong>COMPLETION QUARTER</strong> (β = 59.84, p < 0.001) are highly significant, reinforcing the importance of project timing.</li>
+      <li><strong>V3</strong> (Lot area): β = -0.2331, p < 0.001 — significant negative effect.</li>
+      <li><strong>V8</strong> (Initial unit price): β = 1.203, p < 0.001 — strong positive influence on sales price.</li>
+      <li><strong>V1</strong> (Project locality): β = -4.779, p < 0.05 — moderate negative effect.</li>
+      <li><strong>V2</strong> (Total floor area): β = 0.0663, p < 0.05 — moderate positive effect.</li>
+      <li><strong>V5</strong> (Preliminary estimated cost): β = -0.6548, p < 0.1 — marginally significant negative effect.</li>
+    </ul>  </li>
+    These estimates highlight the central role of physical and economic attributes in shaping final sale price.
 
-3.Model Performance:
-Adjusted R-squared: 0.9848: This tells us that the model explains about 98.48% of the changes in actual sales prices (V104). This shows the model is a good fit for the data.But High R-squared with excessive predictors (75 variables) may harm generalizability. We need careful about the overfitting risk for this model.
-F-statistic = 321.9 with a p-value < 2.2e-16, indicating that Model is statistically significant overall.
-4.Multicollinearity and undefined coefficients: There are undefined coefficients for 32 predictor variables. This points to a multicollinearity issue. This means some variables are very closely related, making it hard to tell their separate effects. We can use VIF to check for multicollinearity and think about removing or combining variables that are highly correlated.
+    </ul><ul style="margin-top: 0;">
+    
+  <li><strong>Model Fit and Complexity:</strong>
+    <ul>
+      <li>Adjusted R² = 0.9848 indicates the model explains 98.48% of the variance in actual sales price.</li>
+      <li>F-statistic = 321.9 (p < 2.2e-16), confirming overall model significance.</li>
+    </ul>
+  </li>
+    While the model performs well in-sample, the inclusion of 75 predictors raises concerns about overfitting and general isability.
+   </ul><ul style="margin-top: 0;">
+    
+  <li><strong>Multicollinearity and Stability:</strong>
+    <ul>
+      <li>32 coefficients are undefined — a strong signal of multicollinearity among predictors.</li>
+      <li>VIF analysis is recommended to identify redundant predictors and stabil ise model interpretation.</li>
+    </ul>
+  </li>
+  
+    This suggests the need for regularisation or feature reduction to improve robustness.
+</ul>
+')
+```
 
 ### c). Fit a linear regression model to explain the “actual sales price” (V104) in terms of other variables (excluding the variable “actual construction costs” (V105)) using (a) backwards selection and (b) stepwise selection. Compare these two models in terms of outputs, computational time and holdout mean square error. (Hint: summarising your results in a table allows for easy comparison).
 
@@ -618,39 +636,22 @@ print(model_comparison)
 
 
 ### e). Please give a possible explanation of why one method is better than the other in this case,considering also results from backwards and stepwise selection.
-From the comparison of the four models (Ridge, LASSO, Backward, and Stepwise selection), LASSO demonstrates the best overall performance in this case, and here’s why:
-
-Lower Prediction Error:
-
-LASSO achieves the lowest Holdout MSE (61648.42	) compared to Ridge (92275.39), Backward (89101.99	), and Stepwise (69494.02). This indicates LASSO generalizes better to unseen data.Its lower CV MSE (27436.48	) (compared to Ridge’s 48080.05) further validates its robustness.
-
-Computational Efficiency:
-
-LASSO runs much faster (0.125 seconds) than Backward (9.823s) and Stepwise (14.149s), making it scalable for large datasets.Ridge (0.240s) is also fast but performs worse in prediction accuracy.
-
-Variable Sparsity:
-
-LASSO retains only 40 predictors (vs. Ridge’s 108 and Backward’s 43), reducing overfitting risk while maintaining interpretability.Ridge Model keeps all the predictors (108 here), but makes their effects smaller.Stepwise selects fewer predictors (22) but has higher Holdout MSE than LASSO, suggesting it might discard useful variables.
-
-Why LASSO Outperforms Backward/Stepwise:
-
-Automatic Feature Selection: LASSO’s L1 regularization shrinks irrelevant coefficients to exact zero, avoiding the "greedy" pitfalls of stepwise methods, which can get stuck in suboptimal variable subsets.
-
-Handling Multicollinearity: LASSO and Ridge handle correlated predictors better than stepwise methods, which often fail in high-dimensional settings.
-
-While Stepwise is simpler to interpret, its computational cost and higher error make it less practical here.Ridge retains all variables, leading to higher complexity and overfitting.LASSO balances accuracy, speed, and simplicity effectively, making it the superior choice for this dataset. Its ability to select key predictors while minimizing prediction error aligns well with the observed data patterns. 
+  
 
 ```{r q1e-model-comparison-narrative, results='asis', echo=FALSE}
 cat('
+
+From the comparison of the four models (Ridge, LASSO, Backward, and Stepwise selection), LASSO demonstrates the best overall performance in this case, and here’s why:
 <ul style="margin-top: 0;">
   <li><strong>Prediction Accuracy:</strong>
     <ul>
       <li>LASSO achieved the lowest Holdout MSE (61,648.42), outperforming Ridge (92,275.39), Backward (89,101.99), and Stepwise (69,494.02).</li>
       <li>Its CV MSE (27,436.48) was also lower than Ridge’s (48,080.05), reinforcing its robustness across folds.</li>
     </ul>
-    These results indicate that LASSO generalizes better to unseen data than the other methods.
+    These results indicate that LASSO generalises better to unseen data than the other methods.
   </li>
-
+   </ul>
+<ul style="margin-top: 0;">
   <li><strong>Computational Efficiency:</strong>
     <ul>
       <li>LASSO completed in just 0.125 seconds, faster than Backward (9.823s) and Stepwise (14.149s).</li>
@@ -658,22 +659,26 @@ cat('
     </ul>
     This makes LASSO highly scalable for larger datasets without sacrificing performance.
   </li>
-
+   </ul>
+<ul style="margin-top: 0;">
   <li><strong>Model Sparsity and Interpretability:</strong>
     <ul>
       <li>LASSO retained 40 predictors, offering a simpler, more interpretable model.</li>
       <li>By contrast, Ridge retained all 108 variables, and Backward kept 43. Stepwise retained the fewest (22), but with higher error.</li>
-    </ul>
+    </ul></li>
     LASSO strikes a balance by selecting key variables while maintaining predictive strength.
-  </li>
+   </ul>
+   
+   
+<ul style="margin-top: 0;">
 
   <li><strong>Why LASSO Outperforms Traditional Methods:</strong>
     <ul>
       <li>LASSO’s L1 penalty automatically shrinks irrelevant coefficients to zero, unlike stepwise selection which may get stuck in suboptimal variable sets.</li>
       <li>Both LASSO and Ridge handle multicollinearity better than stepwise methods, which are more sensitive to correlated predictors.</li>
-    </ul>
-    While Stepwise is easier to interpret, its higher error and slower execution make it less practical. Ridge avoids overfitting but retains unnecessary complexity. LASSO offers the most effective trade-off between performance, simplicity, and generalizability.
-  </li>
+    </ul>  </li>
+  
+    While Stepwise is easier to interpret, its higher error and slower execution make it less practical. Ridge avoids overfitting but retains unnecessary complexity. LASSO offers the most effective trade-off between performance, simplicity, and generalisability.
 </ul>
 ')
 ```
@@ -719,15 +724,15 @@ prepare_data <- function(data, seed) {
 
 ### a). Confirm that a linear model can fit the training data exactly. Why is this model not going to be useful?
 
-```{r}
+```{r , results='asis'}
 lm_data <- prepare_data(parkinsons_data, 123)
 
 # Fit a linear model
 lm_model <- lm(lm_data$y_train ~ lm_data$X_train)
-summary(lm_model)
-
+#summary(lm_model)
+html_summary(lm_model, title = "trial") 
 ```
-The R-squared value of 1 indicates a perfect fit on the training data. However, this is likely due to overfitting, as the model is using 97 predictors with only 30 observations. In such cases, the model memorizes the data instead of learning meaningful relationships, which results in poor generalization to new data.
+The R-squared value of 1 indicates a perfect fit on the training data. However, this is likely due to overfitting, as the model is using 97 predictors with only 30 observations. In such cases, the model memorises the data instead of learning meaningful relationships, which results in poor generalisation to new data.
 
 ### b). Now use the LASSO to fit the training data, using leave-one-out cross-validation to find the tuning parameter 𝜆. (This means 𝑛𝑓𝑜𝑙𝑑𝑠 = 30. You will also find it convenient to set 𝑔𝑟𝑖𝑑 = 10\^𝑠𝑒𝑞(3,−1,100) and 𝑡ℎ𝑟𝑒𝑠ℎ = 1𝑒 −10). What is the optimal value of 𝜆? and what is the resulting test error?
 ### c). State your final model for the UPDRS. How many features have been selected? What conclusions can you draw?
@@ -787,7 +792,7 @@ cat("LASSO model equation:\n", result123$formula, "\n")
 
 
 ```
-The LASSO regression identified a lambda value (≈1.02) that minimized cross-validated MSE, resulting in a model with only four non-zero coefficients: X9, X82, X83, and X97. This demonstrates strong feature selection capability, improving interpretability and reducing overfitting risks. 
+The LASSO regression identified a lambda value (≈1.02) that minimised cross-validated MSE, resulting in a model with only four non-zero coefficients: X9, X82, X83, and X97. This demonstrates strong feature selection capability, improving interpretability and reducing overfitting risks. 
  The resulting formula list below:
 $$
 \text{UPDRS} = 26.1423 + 0.2039 \times X_9 + 0.0586 \times X_{82} + 0.3937 \times X_{83} + 7.0572 \times X_{97}
@@ -865,7 +870,7 @@ cat('
       <li>The overlap suggests that certain predictors (e.g., X83 and X97) are robustly informative.</li>
       <li>The differences demonstrate that elastic net models can be sensitive to small variations in data splits — a reminder to validate stability across multiple resampling configurations.</li>
     </ul>
-    These observations reinforce the need for careful validation when interpreting selected predictors from regularized models.
+    These observations reinforce the need for careful validation when interpreting selected predictors from regularised models.
   </li>
 </ul>
 
@@ -880,7 +885,7 @@ cat('
 
 ## Question 3
 
-### a). Train an ElasticNet model to predict MEAN_ANNUAL_RAINFALL using 10-fold cross-validation to optimize values for 𝛼 and 𝜆.
+### a). Train an ElasticNet model to predict MEAN_ANNUAL_RAINFALL using 10-fold cross-validation to optimise values for 𝛼 and 𝜆.
 1. Data Preparation and Splitting
 ```{r}
 # Load the data
@@ -998,13 +1003,13 @@ print(coef_table_1se)
 
 Based on the comparison of the two models using lambda.min and lambda.1se,We evaluated two elastic net regression models with alpha = 0.3, using lambda.min and lambda.1se. The model with lambda.min had a lower MSE of 11,412.89 and RMSE of 106.83, while the lambda.1se model had a slightly higher MSE of 13,078.75 and RMSE of 114.36.
 
-In terms of complexity, the lambda.min model used 13 predictors, whereas the lambda.1se model used only 9 predictors, indicating stronger regularization.
+In terms of complexity, the lambda.min model used 13 predictors, whereas the lambda.1se model used only 9 predictors, indicating stronger regularisation.
 
 This shows a typical trade-off:
 lambda.min provides better predictive accuracy, but with more variables in the model.
 lambda.1se gives a more parsimonious model (fewer predictors), which may be preferred for simplicity or interpretability, even at the cost of slightly higher error.
 
-In real-world applications, especially when working with environmental or climate-related data, interpretability and generalizability are often more important than marginal gains in accuracy. A simpler model is also easier to communicate and deploy.
+In real-world applications, especially when working with environmental or climate-related data, interpretability and generalisability are often more important than marginal gains in accuracy. A simpler model is also easier to communicate and deploy.
 
 Therefore, the lambda.1se model strikes a better balance between performance and model simplicity.
 
@@ -1037,16 +1042,16 @@ cat('
     <ul>
       <li>The lambda.1se model uses only 9 predictors, while the lambda.min model retains 13.</li>
     </ul>
-    This reduction in model complexity improves interpretability and may support better generalization to new data.
+    This reduction in model complexity improves interpretability and may support better general isation to new data.
   </li>
-
+   </ul><ul style="margin-top: 0;">
   <li><strong>Trade-off and Decision Justification:</strong>
     <ul>
       <li>While lambda.min offers slightly lower error, the increase in complexity is not justified by a large performance gain.</li>
       <li>In environmental and scientific applications, simpler models are often preferred when predictive power is comparable.</li>
     </ul>
-    For this reason, the lambda.1se model is selected as the final model for its balance between accuracy and parsimony.
   </li>
+    For this reason, the lambda.1se model is selected as the final model for its balance between accuracy and parsimony.
 </ul>
 
 <p>The final model selected (lambda.1se, α = 0.3) is expressed as:</p>
